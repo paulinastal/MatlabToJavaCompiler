@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact name="MatlabToJavaCompiler:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/MatlabToJavaCompiler_jar</output-path>
+    <root id="root">
+      <element id="archive" name="MatlabToJavaCompiler.jar">
+        <element id="module-output" name="MatlabToJavaCompiler" />
+      </element>
+      <element id="library" level="project" name="Maven: org.antlr:antlr4-runtime:4.8" />
+    </root>
+  </artifact>
+</component>
