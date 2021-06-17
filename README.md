@@ -30,25 +30,27 @@
 ### 5. Opis tokenów
 
 ```
+//tokeny
+ 
 //nowa linia
 NL : ('\r' '\n' | '\r' | '\n')  -> channel(HIDDEN);
-
+ 
 //pomiń białe znaki
 WS : [ \t] -> skip;
-
+ 
 //operacje
 PLUS        :   '+';
 MINUS       :   '-';
 DIVIDE      :   '/';
 MULTIPLY    :   '*';
 POWER       :   '^';
-
+ 
 //operacje na macierzach
 ELEMENT_WISE_MULTIPLY	    : '.*';
 ELEMENT_WISE_DIVIDE	    : './';
 ELEMENT_WISE_POWER	    : '.^';
-
-
+ 
+ 
 //słowa kluczowe
 GLOBAL		: 'global';
 IF		: 'if';
@@ -60,13 +62,9 @@ FOR		: 'for';
 SWITCH		: 'switch';
 OTHERWISE	: 'otherwise';
 CASE		: 'case';
-CONTINUE	: 'continue';
-BREAK		: 'break';
 FUNCTION	: 'function';
 RETURN		: 'return';
-SET		: 'set';
-GET		: 'get';
-
+ 
 //znaki specjalne
 ASSIGN                  : '=';
 DOT			: '.';
@@ -79,20 +77,19 @@ LEFT_BRACE		: '{';
 RIGHT_BRACE		: '}';
 LEFT_SQUARE_BRACKET	: '[';
 RIGHT_SQUARE_BRACKET	: ']';
-
-
-//atomy: znaki, liczby, białe znaki
-ID: [a-zA-Z] [a-zA-Z0-9_]*;
-
+ 
 //wartości logiczne
 TRUE        :   'true';
 FALSE       :   'false';
-
+ 
+//atomy: znaki, liczby, białe znaki
+ID: [a-zA-Z] [a-zA-Z0-9_]*;
+ 
 //operatory logiczne
 AND         :   '&&';
 OR          :   '||';
 NOT         :   '~';
-
+ 
 //operatory porownania
 EQUAL               :   '==';
 NOT_EQUAL           :   '~=';
@@ -100,11 +97,11 @@ GREATER_THAN        :   '>';
 GREATER_OR_EQUAL    :   '>=';
 LESS_THAN           :   '<';
 LESS_OR_EQUAL       :   '<=';
-
-
+ 
+ 
 //liczby całkowite
 INT: [0-9]+;
-
+ 
 //liczby rzeczywiste
 FLOAT:	[0-9]+ '.' [0-9]*;
 ```
@@ -115,38 +112,54 @@ FLOAT:	[0-9]+ '.' [0-9]*;
 program:
 	( statement | def_function )*
 ;
-
+ 
 //atomy
-
+ 
 bool:
 	TRUE
 |	FALSE
 ;
-
-empty_array:
-	LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
+ 
+variable:
+    ID
+|   INT
+|   FLOAT
 ;
-
-empty_cell:
-	LEFT_BRACE RIGHT_BRACE
-;
-
-end:
+ 
+def_function:
+	FUNCTION (function_returns ASSIGN)? ID function_params?
+	statement*
 	END
 ;
-
-floa:
-	FLOAT
+ 
+function_params:
+	LEFT_PARENTHESIS (ID (COMMA ID)*)? RIGHT_PARENTHESIS
 ;
-
-integer:
-	INT
+ 
+function_returns:
+	ID
+|	LEFT_SQUARE_BRACKET ID (COMMA ID)* RIGHT_SQUARE_BRACKET
 ;
-
-var:
-    ID
+ 
+statement:
+	(   statement_assign
+	|   statement_if
+	|   statement_for
+	|   statement_while
+	|   statement_switch
+	|   function
+	)
+( COMMA | SEMI_COLON )?
 ;
-
+ 
+statement_assign:
+    ID ASSIGN (variable|negation| math_expression | logic_expression |array |function|parenthesis_expression)
+;
+ 
+math_expression:
+     (variable|negation|array|parenthesis_expression) math_operator (variable|negation|array|parenthesis_expression|math_expression)
+;
+ 
 math_operator:
     PLUS
 |   MINUS
@@ -157,12 +170,19 @@ math_operator:
 |   ELEMENT_WISE_DIVIDE
 |   ELEMENT_WISE_POWER
 ;
-
+ 
+logic_expression:
+        bool
+|	variable relational_operator variable
+|       logic_expression logic_operator logic_expression
+|       logic_negation
+;
+ 
 logic_operator:
     AND
 |   OR
 ;
-
+ 
 relational_operator:
     EQUAL
 |   NOT_EQUAL
@@ -171,114 +191,69 @@ relational_operator:
 |   GREATER_THAN
 |   GREATER_OR_EQUAL
 ;
-
-def_function:
-	FUNCTION (function_returns ASSIGN)? ((GET | SET) DOT)? var function_params?
-	statement*
-	end
+ 
+array:
+    LEFT_SQUARE_BRACKET (variable|logic_expression) (COMMA? (variable|logic_expression))* RIGHT_SQUARE_BRACKET
+|   LEFT_SQUARE_BRACKET (variable|logic_expression) (COMMA? (variable|logic_expression))* (semi_colon_operator (variable|logic_expression) (COMMA? (variable|logic_expression))*)* RIGHT_SQUARE_BRACKET
 ;
-
-function_params:
-	LEFT_PARENTHESIS (var (COMMA var)*)? RIGHT_PARENTHESIS
+ 
+semi_colon_operator:
+    SEMI_COLON
 ;
-
-function_returns:
-	var
-|	LEFT_SQUARE_BRACKET var (COMMA var)* RIGHT_SQUARE_BRACKET
+ 
+ 
+function:
+	ID
+	LEFT_PARENTHESIS
+	((variable|negation|array) (COMMA (variable|negation|array))*)?
+	RIGHT_PARENTHESIS
 ;
-
-statement_assign:
-    var ASSIGN expression
-;
-
+ 
 statement_if:
-	(IF logic_expression COMMA?
+	(IF (logic_expression) COMMA?
 		statement*
-	(ELSEIF logic_expression COMMA?
+	(ELSEIF (logic_expression) COMMA?
 		statement*)*
 	(ELSE
 		statement*)?
 	END)
-|	IF expression (COMMA | SEMI_COLON) statement (COMMA | SEMI_COLON) END
 ;
-
+ 
 statement_switch:
-    SWITCH expression
-        (CASE expression
+    SWITCH variable
+        (CASE variable
             statement*)*
         (OTHERWISE
             statement*)?
     END
 ;
-
-statement_for:
-	FOR var ASSIGN expression COMMA?
-		statement*
-	END
-;
-
+ 
 statement_while:
 	WHILE logic_expression COMMA?
 		statement*
 	END
 ;
-
-array:
-    LEFT_SQUARE_BRACKET expression (COMMA? expression)* RIGHT_SQUARE_BRACKET
-|   LEFT_SQUARE_BRACKET expression (COMMA? expression)* (semi_colon_operator expression (COMMA? expression)*)* RIGHT_SQUARE_BRACKET
+ 
+statement_for:
+	FOR ID ASSIGN (colon_expression|array) COMMA?
+		statement*
+	END
 ;
-
-semi_colon_operator:
-    SEMI_COLON
+ 
+colon_expression:
+       variable COLON variable
 ;
-
-function:
-	var
-	LEFT_PARENTHESIS
-	((expression | empty_cell) (COMMA (expression | empty_cell))*)?
-	RIGHT_PARENTHESIS
-;
-
-statement:
-	(   statement_assign
-	|   statement_if
-	|   statement_for
-	|   statement_while
-	|   statement_switch
-	|   expression
-	|   logic_expression
-	|   parenthesis_expression
-	|   function
-	|   var
-	|   BREAK
-	|   CONTINUE
-	|   RETURN
-	)
-( COMMA | SEMI_COLON )?
-;
-
-expression:
-        bool
-|       floa
-|       end
-|       integer
-|       var
-|       array
-|       function
-|       parenthesis_expression
-|       expression COLON expression
-|       (PLUS | MINUS | NOT) expression
-|	expression math_operator expression
-;
-
+ 
 parenthesis_expression:
-LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
+    LEFT_PARENTHESIS (variable|negation|math_expression|array) RIGHT_PARENTHESIS
 ;
-
-logic_expression:
-        bool
-|	expression relational_operator expression
-|       logic_expression logic_operator logic_expression
+ 
+negation:
+    MINUS variable
+;
+ 
+logic_negation:
+    NOT logic_expression
 ;
 ```
 
@@ -294,7 +269,7 @@ ANTLR (ANother Tool for Language Recognition) to generator parserów do czytania
 
 ### 9. Informacje o zastosowaniu specyficznych metod rozwiązania problemu
 
-
+W celu uniknięcia błędu związanego z deklaracją tej samej zmiennej przy przechodzeniu przez drzewo parsowania zostaną one zapisane w mapie a następnie odczytane i sprawdzone: jeśli nie wystąpiły jeszcze w pliku zostaną one utworzone natomiast w innym przypadku przypisana będzie do nich ich wartość.
 
 ### 10. Krótka instrukcja obsługi
 Przed uruchomieniem programu należy najpierw zainstalować ANTLR4 zgodnie z instrukcją na stronie https://www.antlr.org. 
@@ -364,9 +339,9 @@ public class Przyklad2 {
         Integer y = 2;
         Double z = 0.0;
 
-        if (x>0)x>0 && (y>0) {
+        if (x>0 && (y>0)) {
             z = 3;
-        } else if (x<=0)x<=0 || (y<0) {
+        } else if (x<=0 || (y<0)){
             z = 66;
         } else  {
             z = 222.99;
