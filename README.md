@@ -371,6 +371,34 @@ public class Przyklad3 {
     }
 }
 ```
+###### Przykład 4
+Plik napisany w Matlabie
+```matlab
+function m = stat2(x)
+    x = 2;
+    m = 6;
+    s = 10;
+
+    while x>3
+        y=2
+    end
+end
+```
+Wygenerowany plik w Javie
+```java
+public class Przyklad4 {
+    public Object stat2(Object x) {
+        Integer x = 2;
+        Integer m = 6;
+        Integer s = 10;
+
+        while (x>3) {
+            Integer y = 2;
+        }
+        return m;
+    }
+}
+```
 ### 12. Możliwe rozszerzenia programu
   * Obsługa klas i obiektów
   * Obsługa plików
