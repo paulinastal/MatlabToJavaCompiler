@@ -19,7 +19,6 @@ public class JavaCodeCreator {
     private List<String> logList;
     private List<String> intermediateTranslation = new ArrayList<>();
     private Map<String, String> variableNamesTypesMap = new HashMap<>();
-    private List<String> returnFunctionValue = new ArrayList<>();
 
     public JavaCodeCreator() {
     }
@@ -27,14 +26,14 @@ public class JavaCodeCreator {
     public void createFile() {
         try (
                 var fileWriter = new FileWriter(javaFolderPath + matlabFileName + ".java");
-                var bufferedWriter = new BufferedWriter(fileWriter);
+                var bufferedWriter = new BufferedWriter(fileWriter)
         ) {
             bufferedWriter.write("//Program napisany w JAVA");
             bufferedWriter.newLine();
             for (String translation : intermediateTranslation) {
                 bufferedWriter.write(translation);
             }
-            System.out.println("File \"" + matlabFileName + ".java\" saved successfully. Congratulations! ");
+//            System.out.println("File \"" + matlabFileName + ".java\" saved successfully. Congratulations! ");
         } catch (IOException e) {
             System.err.println("Sorry! Failed to save the file ");
         }
@@ -51,7 +50,6 @@ public class JavaCodeCreator {
                 while (!logList.get(nextElem).equals(Log.FUNCTION_DEF_STOP.getName())) {
                     nextElem = checkElement(nextElem);
                 }
-                endFunction(currentLogIndex, returnFunctionValue.get(0));
             } else {
                 intermediateTranslation.add("    public static void main(String[] args) {\n");
                 while (!logList.get(currentLogIndex).equals(Log.PROGRAM_STOP.getName())) {
@@ -73,14 +71,17 @@ public class JavaCodeCreator {
             if (isVariableInMap) {
                 intermediateTranslation.add("        " + variableName + " = ");
             } else {
+                if (logList.get(valueIndex).equals(Log.MATH_EXPRESSION_START.getName())) {
+                    valueIndex++;
+                }
                 String variableType = checkVariable(valueIndex);
                 String valueType;
                 if (variableType.equals("variable")) {
-                    valueType = getVariableType(logList.get(valueIndex));
+                    valueType = getVariableType(valueIndex);
                     variableNamesTypesMap.put(variableName, valueType);
                     intermediateTranslation.add("        " + valueType + " " + variableName + " = ");
                 } else if (variableType.equals("array")) {
-                    valueType = getVariableType(logList.get(valueIndex + 1));
+                    valueType = getVariableType(valueIndex + 1);
                     int semicolonCount = countSemicolons(valueIndex);
                     if (semicolonCount > 0) {
                         variableNamesTypesMap.put(variableName, "ArrayList<ArrayList<" + valueType + ">>");
@@ -106,6 +107,12 @@ public class JavaCodeCreator {
             currentLogIndex = createIf(currentLogIndex);
         } else if (logList.get(currentLogIndex).equals(Log.LOGIC_EXPRESSION_START.getName())) {
             currentLogIndex = createLogicExpression(currentLogIndex);
+        } else if (logList.get(currentLogIndex).equals(Log.LOGIC_NEGATION_START.getName())) {
+            intermediateTranslation.add("!");
+            currentLogIndex++;
+            while (!logList.get(currentLogIndex).equals(Log.LOGIC_NEGATION_STOP.getName())) {
+                currentLogIndex = checkElement(currentLogIndex);
+            }
         } else if (logList.get(currentLogIndex).equals(Log.WHILE_START.getName())) {
             currentLogIndex = createWhile(currentLogIndex);
         } else if (logList.get(currentLogIndex).equals(Log.FOR_START.getName())) {
@@ -119,49 +126,73 @@ public class JavaCodeCreator {
         } else if (logList.get(currentLogIndex).equals(Log.FUNCTION_START.getName())) {
             currentLogIndex = createFunctionCall(currentLogIndex);
         } else if (logList.get(currentLogIndex).equals(Log.FUNCTION_DEF_START.getName())) {
-            ArrayList<String> result = createFunction(currentLogIndex);
-            returnFunctionValue.add(result.get(0));
-            currentLogIndex = Integer.parseInt(result.get(1));
-        } else if (logList.get(currentLogIndex).equals(Log.FUNCTION_DEF_STOP.getName())) {
-            currentLogIndex = endFunction(currentLogIndex, returnFunctionValue.get(0));
+            currentLogIndex = createFunction(currentLogIndex);
         } else if (!Log.getLogList().contains(logList.get(currentLogIndex))) {
+            checkIfKeyWord(logList.get(currentLogIndex));
             intermediateTranslation.add(logList.get(currentLogIndex));
         }
         currentLogIndex++;
         return currentLogIndex;
     }
 
-    private ArrayList<String> createFunction(int valueIndex) {
-        int currentLogIndex;
-        int functionReturnIndex = valueIndex + 1;
-
-        String functionReturnValue = logList.get(functionReturnIndex);
-        int functionNameIndex = functionReturnIndex + 1;
-
+    private int createFunction(int valueIndex) {
+        int functionNameIndex = valueIndex + 1;
         String functionName = logList.get(functionNameIndex);
         checkIfKeyWord(functionName);
-        intermediateTranslation.add("    public Object " + functionName + "(");
 
-        int functionArgIndex = functionNameIndex + 1;
-        while (!logList.get(functionArgIndex).contains(" ")) {
-            intermediateTranslation.add("Object " + logList.get(functionArgIndex) + ", ");
-            functionArgIndex += 1;
+        ArrayList<String> returnedVariablesNames = new ArrayList<>();
+        if (logList.get(functionNameIndex + 1).equals(Log.FUNCTION_RETURNS_START.getName())) {
+            int functionReturnIndex = functionNameIndex + 2;
+            while (!logList.get(functionReturnIndex).equals(Log.FUNCTION_RETURNS_STOP.getName())) {
+                returnedVariablesNames.add(logList.get(functionReturnIndex));
+                functionReturnIndex++;
+            }
+            functionNameIndex = functionReturnIndex;
         }
-        intermediateTranslation.remove(intermediateTranslation.size() - 1);
-        intermediateTranslation.add("Object " + logList.get(functionArgIndex - 1) + ") {\n");
 
-        currentLogIndex = functionArgIndex;
-        ArrayList<String> result = new ArrayList<>();
-        result.add(functionReturnValue);
-        result.add(String.valueOf(currentLogIndex));
-        return result;
-    }
+        String returnType = "void";
+        if (returnedVariablesNames.size() == 1) {
+            returnType = "Object";
+        } else if (returnedVariablesNames.size() > 1) {
+            returnType = "ReturnedObject";
+        }
 
-    private int endFunction(int valueIndex, String returnFunction) {
-        int currentLogIndex;
-        intermediateTranslation.add("        return " + returnFunction + ";\n    }\n");
-        currentLogIndex = valueIndex;
-        return currentLogIndex;
+        intermediateTranslation.add("    public " + returnType + " " + functionName + " (");
+
+        if (logList.get(functionNameIndex + 1).equals(Log.FUNCTION_PARAMS_START.getName())) {
+            int functionParamsIndex = functionNameIndex + 2;
+            while (!logList.get(functionParamsIndex).equals(Log.FUNCTION_PARAMS_STOP.getName())) {
+                intermediateTranslation.add("Object " + logList.get(functionParamsIndex));
+                if (!logList.get(functionParamsIndex + 1).equals(Log.FUNCTION_PARAMS_STOP.getName())) {
+                    intermediateTranslation.add(", ");
+                }
+                functionParamsIndex++;
+            }
+            functionNameIndex = functionParamsIndex;
+        }
+        intermediateTranslation.add(") {\n");
+        while (!logList.get(functionNameIndex).equals(Log.FUNCTION_DEF_STOP.getName())) {
+            functionNameIndex = checkElement(functionNameIndex);
+        }
+
+        if (returnedVariablesNames.size() == 1) {
+            String returnVariable = returnedVariablesNames.get(0);
+            checkIfKeyWord(returnVariable);
+            intermediateTranslation.add("        return " + returnVariable + ";\n    }\n");
+        } else if (returnedVariablesNames.size() > 1) {
+            StringBuilder returnedVariablesBuilder = new StringBuilder();
+            for (String returnedVariablesName : returnedVariablesNames) {
+                checkIfKeyWord(returnedVariablesName);
+                returnedVariablesBuilder.append(returnedVariablesName);
+                returnedVariablesBuilder.append(", ");
+            }
+            String returnedVariables = returnedVariablesBuilder.toString();
+            intermediateTranslation.add("        return new ReturnedObject(" + returnedVariables.substring(0, returnedVariables.length() - 2) + ");\n    }\n");
+        } else {
+            intermediateTranslation.add("    }\n");
+        }
+        functionNameIndex--;
+        return functionNameIndex;
     }
 
     private int countSemicolons(int valueIndex) {
@@ -273,7 +304,12 @@ public class JavaCodeCreator {
     }
 
     private int createArrayList(int currentLogIndex) {
-        String arrayName = logList.get(currentLogIndex - 1);
+        String arrayName;
+        if (logList.get(currentLogIndex - 1).equals(Log.MATH_EXPRESSION_START.getName())) {
+            arrayName = logList.get(currentLogIndex - 2);
+        } else {
+            arrayName = logList.get(currentLogIndex - 1);
+        }
         int arrayElemIndex = currentLogIndex + 1;
         int colonIndex = arrayElemIndex;
         int semicolonsCount = countSemicolons(colonIndex);
@@ -312,6 +348,9 @@ public class JavaCodeCreator {
     }
 
     private int createFunctionCall(int currentLogIndex) {
+        if (logList.get(currentLogIndex - 1).equals(Log.STATEMENT_START.getName())) {
+            intermediateTranslation.add("        ");
+        }
         int functionNameIndex = currentLogIndex + 1;
         String functionName = logList.get(functionNameIndex);
         checkIfKeyWord(functionName);
@@ -324,6 +363,9 @@ public class JavaCodeCreator {
             }
         }
         intermediateTranslation.add(")");
+        if (logList.get(functionArgIndex + 1).equals(Log.STATEMENT_STOP.getName())) {
+            intermediateTranslation.add(";\n");
+        }
         currentLogIndex = functionArgIndex;
         return currentLogIndex;
     }
@@ -346,18 +388,17 @@ public class JavaCodeCreator {
         String variableFor = logList.get(variableForIndex);
         if (logList.get(variableForIndex + 1).equals(Log.ARRAY_START.getName())) {
             int valueIndex = variableForIndex + 2;
-            String value = logList.get(valueIndex);
+            String variableType = getVariableType(valueIndex);
             currentLogIndex = createArrayList(variableFor, valueIndex);
-            String variableType = getVariableType(value);
             intermediateTranslation.add("        for (" + variableType + " " + variableFor + "Element : " + variableFor + ") {\n");
 
         } else {
             intermediateTranslation.add("        for (int " + variableFor + " = ");
-            int startIndex = variableForIndex + 1;
+            int startIndex = variableForIndex + 2;
             intermediateTranslation.add(logList.get(startIndex) + "; " + variableFor + " < ");
             int endIndex = startIndex + 1;
             intermediateTranslation.add(logList.get(endIndex) + "; " + variableFor + "++) {\n");
-            currentLogIndex = endIndex + 1;
+            currentLogIndex = endIndex + 2;
 
         }
         while (!logList.get(currentLogIndex).equals(Log.FOR_STOP.getName())) {
@@ -430,8 +471,13 @@ public class JavaCodeCreator {
 
     private int createLogicExpression(int currentLogIndex) {
         currentLogIndex++;
+        if (logList.get(currentLogIndex).equals("!")) {
+            intermediateTranslation.add("!");
+            currentLogIndex++;
+        }
         if (logList.get(currentLogIndex).equals(Log.LOGIC_EXPRESSION_START.getName())) {
-            checkElement(currentLogIndex);
+            currentLogIndex = checkElement(currentLogIndex);
+            currentLogIndex--;
         } else {
             while (!logList.get(currentLogIndex).equals(Log.LOGIC_EXPRESSION_STOP.getName())) {
                 intermediateTranslation.add(logList.get(currentLogIndex));
@@ -472,6 +518,7 @@ public class JavaCodeCreator {
     private void checkIfKeyWord(String variableName) {
         if (Keyword.getKeyWordsList().contains(variableName)) {
             intermediateTranslation.add("\n**** Error, illegal Java reserved key word used: " + variableName + " ****\n");
+            System.err.println("**** Error, illegal Java reserved key word used: " + variableName + " ****");
             createFile();
             System.exit(1);
         }
@@ -481,8 +528,7 @@ public class JavaCodeCreator {
     private int createArrayList(String variableName, int valueIndex) {
         int currentLogIndex;
         int arrayElemIndex = valueIndex + 1;
-        String firstElement = logList.get(arrayElemIndex);
-        String elemType = getVariableType(firstElement);
+        String elemType = getVariableType(arrayElemIndex);
         intermediateTranslation.add("        ArrayList<" + elemType + "> " + variableName + " = new ArrayList<>(Arrays.asList(");
         while (!logList.get(arrayElemIndex).equals(Log.ARRAY_STOP.getName())) {
             intermediateTranslation.add(logList.get(arrayElemIndex));
@@ -496,14 +542,24 @@ public class JavaCodeCreator {
         return currentLogIndex;
     }
 
-    private String getVariableType(String variable) {
-        String elemType = "";
-        if (variable.contains(".")) {
+    private String getVariableType(int valueIndex) {
+        String elemType;
+        if (logList.get(valueIndex).equals(Log.MATH_EXPRESSION_START.getName())) {
+            valueIndex++;
+            elemType = getVariableType(valueIndex);
+        } else if (logList.get(valueIndex).equals(Log.ARRAY_START.getName())) {
+            valueIndex++;
+            elemType = "ArrayList<" + getVariableType(valueIndex) + ">";
+        } else if (logList.get(valueIndex).contains(".")) {
             elemType = "Double";
-        } else if (variable.equals("true") || variable.equals("false")) {
+        } else if (logList.get(valueIndex).equals(Log.LOGIC_EXPRESSION_START.getName())) {
             elemType = "Boolean";
-        } else {
+        } else if (logList.get(valueIndex).matches("[0-9]+")) {
             elemType = "Integer";
+        } else if (variableNamesTypesMap.containsKey(logList.get(valueIndex))) {
+            elemType = variableNamesTypesMap.get(logList.get(valueIndex));
+        } else {
+            elemType = "Object";
         }
         return elemType;
     }
@@ -540,14 +596,6 @@ public class JavaCodeCreator {
 
     public void setVariableNamesTypesMap(Map<String, String> variableNamesTypesMap) {
         this.variableNamesTypesMap = variableNamesTypesMap;
-    }
-
-    public List<String> getReturnFunctionValue() {
-        return returnFunctionValue;
-    }
-
-    public void setReturnFunctionValue(List<String> returnFunctionValue) {
-        this.returnFunctionValue = returnFunctionValue;
     }
 
     public String getMatlabFileName() {

@@ -17,41 +17,11 @@ public interface MatlabVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBool(MatlabParser.BoolContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MatlabParser#empty_array}.
+	 * Visit a parse tree produced by {@link MatlabParser#variable}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitEmpty_array(MatlabParser.Empty_arrayContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#empty_cell}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEmpty_cell(MatlabParser.Empty_cellContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#end}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEnd(MatlabParser.EndContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#floa}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFloa(MatlabParser.FloaContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#integer}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInteger(MatlabParser.IntegerContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#var}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVar(MatlabParser.VarContext ctx);
+	T visitVariable(MatlabParser.VariableContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MatlabParser#program}.
 	 * @param ctx the parse tree
@@ -77,71 +47,23 @@ public interface MatlabVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunction_returns(MatlabParser.Function_returnsContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MatlabParser#statement_assign}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatement_assign(MatlabParser.Statement_assignContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#statement_if}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatement_if(MatlabParser.Statement_ifContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#statement_switch}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatement_switch(MatlabParser.Statement_switchContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#statement_for}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatement_for(MatlabParser.Statement_forContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#statement_while}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatement_while(MatlabParser.Statement_whileContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#array}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArray(MatlabParser.ArrayContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#semi_colon_operator}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSemi_colon_operator(MatlabParser.Semi_colon_operatorContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MatlabParser#function}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFunction(MatlabParser.FunctionContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MatlabParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitStatement(MatlabParser.StatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MatlabParser#expression}.
+	 * Visit a parse tree produced by {@link MatlabParser#statement_assign}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpression(MatlabParser.ExpressionContext ctx);
+	T visitStatement_assign(MatlabParser.Statement_assignContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MatlabParser#parenthesis_expression}.
+	 * Visit a parse tree produced by {@link MatlabParser#math_expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitParenthesis_expression(MatlabParser.Parenthesis_expressionContext ctx);
+	T visitMath_expression(MatlabParser.Math_expressionContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MatlabParser#math_operator}.
 	 * @param ctx the parse tree
@@ -166,4 +88,70 @@ public interface MatlabVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRelational_operator(MatlabParser.Relational_operatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArray(MatlabParser.ArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#semi_colon_operator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSemi_colon_operator(MatlabParser.Semi_colon_operatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#function}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunction(MatlabParser.FunctionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#statement_if}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatement_if(MatlabParser.Statement_ifContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#statement_switch}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatement_switch(MatlabParser.Statement_switchContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#statement_while}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatement_while(MatlabParser.Statement_whileContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#statement_for}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatement_for(MatlabParser.Statement_forContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#colon_expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitColon_expression(MatlabParser.Colon_expressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#parenthesis_expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParenthesis_expression(MatlabParser.Parenthesis_expressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#negation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNegation(MatlabParser.NegationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MatlabParser#logic_negation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogic_negation(MatlabParser.Logic_negationContext ctx);
 }

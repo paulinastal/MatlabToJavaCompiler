@@ -16,6 +16,8 @@ public class AppMain {
         String javaFolderPath = args[1];
         System.out.println("Matlab file: " + matlabFilePath);
         System.out.println("Java file folder: " + javaFolderPath);
+//        String matlabFilePath = "C:\\Users\\Patrycja\\Desktop\\Test\\MatlabFiles\\przyklad.m";
+//        String javaFolderPath = "C:\\Users\\Patrycja\\Desktop\\Test\\JavaFiles\\";
 
         try {
             MatlabLexer matlabLexer = new MatlabLexer(CharStreams.fromFileName(matlabFilePath));

@@ -7,8 +7,9 @@ import java.util.stream.Stream;
 public enum Log {
     PROGRAM_START("Program start"),
     STATEMENT_START("Statement start"),
-    EXPRESSION_START("Expression start"),
     FUNCTION_DEF_START("Function definition start"),
+    FUNCTION_PARAMS_START("Function params start"),
+    FUNCTION_RETURNS_START("Function returns start"),
     ARRAY_START("Array start"),
     ASSIGN_START("Assign start"),
     FUNCTION_START("Function start"),
@@ -18,11 +19,15 @@ public enum Log {
     FOR_START("For start"),
     LOGIC_EXPRESSION_START("Logic expression start"),
     PARENTHESIS_EXPRESSION_START("Parenthesis expression start"),
+    MATH_EXPRESSION_START("Math expression start"),
+    COLON_EXPRESSION_START("Colon expression start"),
+    LOGIC_NEGATION_START("Logic negation start"),
 
     PROGRAM_STOP("Program stop"),
     STATEMENT_STOP("Statement stop"),
-    EXPRESSION_STOP("Expression stop"),
     FUNCTION_DEF_STOP("Function definition stop"),
+    FUNCTION_PARAMS_STOP("Function params stop"),
+    FUNCTION_RETURNS_STOP("Function returns stop"),
     ARRAY_STOP("Array stop"),
     ASSIGN_STOP("Assign stop"),
     FUNCTION_STOP("Function stop"),
@@ -31,7 +36,10 @@ public enum Log {
     WHILE_STOP("While stop"),
     FOR_STOP("For stop"),
     LOGIC_EXPRESSION_STOP("Logic expression stop"),
-    PARENTHESIS_EXPRESSION_STOP("Parenthesis expression stop");
+    PARENTHESIS_EXPRESSION_STOP("Parenthesis expression stop"),
+    MATH_EXPRESSION_STOP("Math expression stop"),
+    COLON_EXPRESSION_STOP("Colon expression stop"),
+    LOGIC_NEGATION_STOP("Logic negation stop");
 
     private final String name;
 

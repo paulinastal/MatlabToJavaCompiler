@@ -5,8 +5,6 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import pl.kompilatory.antlr4.MatlabBaseListener;
 import pl.kompilatory.antlr4.MatlabParser;
-import pl.kompilatory.app.JavaCodeCreator;
-import pl.kompilatory.app.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +39,7 @@ public class MatlabToJavaListener extends MatlabBaseListener {
 
     @Override
     public void enterBool(MatlabParser.BoolContext ctx) {
-        super.enterBool(ctx);
+        logList.add(ctx.getText());
     }
 
     @Override
@@ -51,68 +49,59 @@ public class MatlabToJavaListener extends MatlabBaseListener {
     }
 
     @Override
-    public void enterEmpty_array(MatlabParser.Empty_arrayContext ctx) {
-        super.enterEmpty_array(ctx);
-    }
-
-    @Override
-    public void exitEmpty_array(MatlabParser.Empty_arrayContext ctx) {
-        super.exitEmpty_array(ctx);
-    }
-
-    @Override
-    public void enterEmpty_cell(MatlabParser.Empty_cellContext ctx) {
-        super.enterEmpty_cell(ctx);
-    }
-
-    @Override
-    public void exitEmpty_cell(MatlabParser.Empty_cellContext ctx) {
-        super.exitEmpty_cell(ctx);
-    }
-
-    @Override
-    public void enterEnd(MatlabParser.EndContext ctx) {
-        super.enterEnd(ctx);
-    }
-
-    @Override
-    public void exitEnd(MatlabParser.EndContext ctx) {
-        super.exitEnd(ctx);
-    }
-
-    @Override
-    public void enterFloa(MatlabParser.FloaContext ctx) {
+    public void enterVariable(MatlabParser.VariableContext ctx) {
         logList.add(ctx.getText());
     }
 
     @Override
-    public void exitFloa(MatlabParser.FloaContext ctx) {
-        super.exitFloa(ctx);
+    public void exitVariable(MatlabParser.VariableContext ctx) {
+        super.exitVariable(ctx);
     }
 
     @Override
-    public void enterInteger(MatlabParser.IntegerContext ctx) {
-        logList.add(ctx.getText());
+    public void enterMath_expression(MatlabParser.Math_expressionContext ctx) {
+       logList.add(Log.MATH_EXPRESSION_START.getName());
     }
 
     @Override
-    public void exitInteger(MatlabParser.IntegerContext ctx) {
-        super.exitInteger(ctx);
+    public void exitMath_expression(MatlabParser.Math_expressionContext ctx) {
+        logList.add(Log.MATH_EXPRESSION_STOP.getName());
     }
 
     @Override
-    public void enterVar(MatlabParser.VarContext ctx) {
-        logList.add(ctx.getText());
+    public void enterColon_expression(MatlabParser.Colon_expressionContext ctx) {
+        logList.add(Log.COLON_EXPRESSION_START.getName());
     }
 
     @Override
-    public void exitVar(MatlabParser.VarContext ctx) {
-        super.exitVar(ctx);
+    public void exitColon_expression(MatlabParser.Colon_expressionContext ctx) {
+        logList.add(Log.COLON_EXPRESSION_STOP.getName());
+    }
+
+    @Override
+    public void enterNegation(MatlabParser.NegationContext ctx) {
+        logList.add("-");
+    }
+
+    @Override
+    public void exitNegation(MatlabParser.NegationContext ctx) {
+        super.exitNegation(ctx);
+    }
+
+    @Override
+    public void enterLogic_negation(MatlabParser.Logic_negationContext ctx) {
+        logList.add("!");
+    }
+
+    @Override
+    public void exitLogic_negation(MatlabParser.Logic_negationContext ctx) {
+//        logList.add(Log.LOGIC_NEGATION_STOP.getName());
     }
 
     @Override
     public void enterDef_function(MatlabParser.Def_functionContext ctx) {
         logList.add(Log.FUNCTION_DEF_START.getName());
+        logList.add(ctx.ID().getText());
     }
 
     @Override
@@ -122,27 +111,34 @@ public class MatlabToJavaListener extends MatlabBaseListener {
 
     @Override
     public void enterFunction_params(MatlabParser.Function_paramsContext ctx) {
-        super.enterFunction_params(ctx);
+        logList.add(Log.FUNCTION_PARAMS_START.getName());
+        for (TerminalNode terminalNode : ctx.ID()) {
+            logList.add(terminalNode.getText());
+        }
     }
 
     @Override
     public void exitFunction_params(MatlabParser.Function_paramsContext ctx) {
-        super.exitFunction_params(ctx);
+        logList.add(Log.FUNCTION_PARAMS_STOP.getName());
     }
 
     @Override
     public void enterFunction_returns(MatlabParser.Function_returnsContext ctx) {
-        super.enterFunction_returns(ctx);
+        logList.add(Log.FUNCTION_RETURNS_START.getName());
+        for (TerminalNode terminalNode : ctx.ID()) {
+            logList.add(terminalNode.getText());
+        }
     }
 
     @Override
     public void exitFunction_returns(MatlabParser.Function_returnsContext ctx) {
-        super.exitFunction_returns(ctx);
+        logList.add(Log.FUNCTION_RETURNS_STOP.getName());
     }
 
     @Override
     public void enterStatement_assign(MatlabParser.Statement_assignContext ctx) {
         logList.add(Log.ASSIGN_START.getName());
+        logList.add(ctx.ID().getText());
     }
 
     @Override
@@ -173,6 +169,7 @@ public class MatlabToJavaListener extends MatlabBaseListener {
     @Override
     public void enterStatement_for(MatlabParser.Statement_forContext ctx) {
         logList.add(Log.FOR_START.getName());
+        logList.add(ctx.ID().getText());
     }
 
     @Override
@@ -203,6 +200,7 @@ public class MatlabToJavaListener extends MatlabBaseListener {
     @Override
     public void enterFunction(MatlabParser.FunctionContext ctx) {
         logList.add(Log.FUNCTION_START.getName());
+        logList.add(ctx.ID().getText());
     }
 
     @Override
@@ -218,16 +216,6 @@ public class MatlabToJavaListener extends MatlabBaseListener {
     @Override
     public void exitStatement(MatlabParser.StatementContext ctx) {
         logList.add(Log.STATEMENT_STOP.getName());
-    }
-
-    @Override
-    public void enterExpression(MatlabParser.ExpressionContext ctx) {
-        super.enterExpression(ctx);
-    }
-
-    @Override
-    public void exitExpression(MatlabParser.ExpressionContext ctx) {
-        super.exitExpression(ctx);
     }
 
     @Override

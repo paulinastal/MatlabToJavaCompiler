@@ -32,12 +32,8 @@ FOR			: 'for';
 SWITCH		: 'switch';
 OTHERWISE	: 'otherwise';
 CASE		: 'case';
-CONTINUE	: 'continue';
-BREAK		: 'break';
 FUNCTION	: 'function';
 RETURN		: 'return';
-SET			: 'set';
-GET			: 'get';
 
 //znaki specjalne
 ASSIGN                  : '=';
@@ -52,13 +48,12 @@ RIGHT_BRACE				: '}';
 LEFT_SQUARE_BRACKET		: '[';
 RIGHT_SQUARE_BRACKET	: ']';
 
-
-//atomy: znaki, liczby, białe znaki
-ID: [a-zA-Z] [a-zA-Z0-9_]*;
-
 //wartości logiczne
 TRUE        :   'true';
 FALSE       :   'false';
+
+//atomy: znaki, liczby, białe znaki
+ID: [a-zA-Z] [a-zA-Z0-9_]*;
 
 //operatory logiczne
 AND         :   '&&';
@@ -87,100 +82,29 @@ bool:
 |	FALSE
 ;
 
-empty_array:
-	LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
-;
-
-empty_cell:
-	LEFT_BRACE RIGHT_BRACE
-;
-
-end:
-	END
-;
-
-floa:
-	FLOAT
-;
-
-integer:
-	INT
-;
-
-var:
+variable:
     ID
+|   INT
+|   FLOAT
 ;
-
 
 program:
 	( statement | def_function )*
 ;
 
 def_function:
-	FUNCTION (function_returns ASSIGN)? ((GET | SET) DOT)? var function_params?
+	FUNCTION (function_returns ASSIGN)? ID function_params?
 	statement*
-	end
+	END
 ;
 
 function_params:
-	LEFT_PARENTHESIS (var (COMMA var)*)? RIGHT_PARENTHESIS
+	LEFT_PARENTHESIS (ID (COMMA ID)*)? RIGHT_PARENTHESIS
 ;
 
 function_returns:
-	var
-|	LEFT_SQUARE_BRACKET var (COMMA var)* RIGHT_SQUARE_BRACKET
-;
-
-statement_assign:
-    var ASSIGN expression
-;
-
-statement_if:
-	(IF logic_expression COMMA?
-		statement*
-	(ELSEIF logic_expression COMMA?
-		statement*)*
-	(ELSE
-		statement*)?
-	END)
-|	IF expression (COMMA | SEMI_COLON) statement (COMMA | SEMI_COLON) END
-;
-
-statement_switch:
-    SWITCH expression
-        (CASE expression
-            statement*)*
-        (OTHERWISE
-            statement*)?
-    END
-;
-
-statement_for:
-	FOR var ASSIGN expression COMMA?
-		statement*
-	END
-;
-
-statement_while:
-	WHILE logic_expression COMMA?
-		statement*
-	END
-;
-
-array:
-    LEFT_SQUARE_BRACKET expression (COMMA? expression)* RIGHT_SQUARE_BRACKET
-|   LEFT_SQUARE_BRACKET expression (COMMA? expression)* (semi_colon_operator expression (COMMA? expression)*)* RIGHT_SQUARE_BRACKET
-;
-
-semi_colon_operator:
-    SEMI_COLON
-;
-
-function:
-	var
-	LEFT_PARENTHESIS
-	((expression | empty_cell) (COMMA (expression | empty_cell))*)?
-	RIGHT_PARENTHESIS
+	ID
+|	LEFT_SQUARE_BRACKET ID (COMMA ID)* RIGHT_SQUARE_BRACKET
 ;
 
 statement:
@@ -189,34 +113,17 @@ statement:
 	| 	statement_for
 	|   statement_while
 	|   statement_switch
-	|   expression
-	|   logic_expression
-	|   parenthesis_expression
 	|   function
-	|   var
-	| 	BREAK
-	| 	CONTINUE
-	| 	RETURN
 	)
 ( COMMA | SEMI_COLON )?
 ;
 
-expression:
-        bool
-|       floa
-|       end
-|       integer
-|       var
-|       array
-|       function
-|       parenthesis_expression
-|       expression COLON expression
-|       (PLUS | MINUS | NOT) expression
-|	    expression math_operator expression
+statement_assign:
+    ID ASSIGN (variable|negation| math_expression | logic_expression |array |function|parenthesis_expression)
 ;
 
-parenthesis_expression:
-LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
+math_expression:
+     (variable|negation|array|parenthesis_expression) math_operator (variable|negation|array|parenthesis_expression|math_expression)
 ;
 
 math_operator:
@@ -232,8 +139,9 @@ math_operator:
 
 logic_expression:
         bool
-|	    expression relational_operator expression
+|	    variable relational_operator variable
 |       logic_expression logic_operator logic_expression
+|       logic_negation
 ;
 
 logic_operator:
@@ -248,4 +156,68 @@ relational_operator:
 |   LESS_OR_EQUAL
 |   GREATER_THAN
 |   GREATER_OR_EQUAL
+;
+
+array:
+    LEFT_SQUARE_BRACKET (variable|logic_expression) (COMMA? (variable|logic_expression))* RIGHT_SQUARE_BRACKET
+|   LEFT_SQUARE_BRACKET (variable|logic_expression) (COMMA? (variable|logic_expression))* (semi_colon_operator (variable|logic_expression) (COMMA? (variable|logic_expression))*)* RIGHT_SQUARE_BRACKET
+;
+
+semi_colon_operator:
+    SEMI_COLON
+;
+
+
+function:
+	ID
+	LEFT_PARENTHESIS
+	((variable|negation|array) (COMMA (variable|negation|array))*)?
+	RIGHT_PARENTHESIS
+;
+
+statement_if:
+	(IF (logic_expression) COMMA?
+		statement*
+	(ELSEIF (logic_expression) COMMA?
+		statement*)*
+	(ELSE
+		statement*)?
+	END)
+;
+
+statement_switch:
+    SWITCH variable
+        (CASE variable
+            statement*)*
+        (OTHERWISE
+            statement*)?
+    END
+;
+
+statement_while:
+	WHILE logic_expression COMMA?
+		statement*
+	END
+;
+
+statement_for:
+	FOR ID ASSIGN (colon_expression|array) COMMA?
+		statement*
+	END
+;
+
+colon_expression:
+       variable COLON variable
+;
+
+parenthesis_expression:
+LEFT_PARENTHESIS (variable|negation|math_expression|array) RIGHT_PARENTHESIS
+;
+
+negation:
+    MINUS variable
+;
+
+logic_negation:
+    NOT logic_expression
 ;
